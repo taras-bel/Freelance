@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Auth Tokens</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #c82333;
+        }
+        .success {
+            background: #28a745;
+        }
+        .success:hover {
+            background: #218838;
+        }
+        .info {
+            background: #17a2b8;
+        }
+        .info:hover {
+            background: #138496;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Очистка токенов аутентификации</h1>
+        <p>Эта страница поможет очистить старые токены аутентификации из localStorage.</p>
+        
+        <div>
+            <button onclick="showCurrentTokens()" class="info">Показать текущие токены</button>
+            <button onclick="clearOldTokens()" class="success">Очистить старые токены</button>
+            <button onclick="clearAllTokens()">Очистить все токены</button>
+        </div>
+        
+        <div id="output">
+            <h3>Результат:</h3>
+            <pre id="result">Нажмите кнопку для выполнения действия...</pre>
+        </div>
+    </div>
+
+    <script>
+        function showCurrentTokens() {
+            const tokens = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('token') || key.includes('auth') || key.includes('user'))) {
+                    const value = localStorage.getItem(key);
+                    tokens[key] = value ? value.substring(0, 50) + '...' : 'null';
+                }
+            }
+            
+            document.getElementById('result').textContent = 
+                'Текущие токены в localStorage:\n' + JSON.stringify(tokens, null, 2);
+        }
+
+        function clearOldTokens() {
+            const oldKeys = ['authToken', 'token', 'userToken', 'jwt_token'];
+            const removed = [];
+            
+            oldKeys.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    removed.push(key);
+                }
+            });
+            
+            // Оставляем только access_token
+            const accessToken = localStorage.getItem('access_token');
+            if (accessToken) {
+                document.getElementById('result').textContent = 
+                    `Удалены старые токены: ${removed.join(', ')}\n\n` +
+                    `Оставлен access_token: ${accessToken.substring(0, 50)}...\n\n` +
+                    'Теперь можете войти в приложение заново.';
+            } else {
+                document.getElementById('result').textContent = 
+                    `Удалены старые токены: ${removed.join(', ')}\n\n` +
+                    'access_token не найден. Войдите в приложение заново.';
+            }
+        }
+
+        function clearAllTokens() {
+            const allKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('token') || key.includes('auth') || key.includes('user'))) {
+                    allKeys.push(key);
+                    localStorage.removeItem(key);
+                }
+            }
+            
+            document.getElementById('result').textContent = 
+                `Удалены все токены: ${allKeys.join(', ')}\n\n` +
+                'Все токены аутентификации очищены. Войдите в приложение заново.';
+        }
+    </script>
+</body>
+</html> 
