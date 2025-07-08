@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Task Created - FreelanceAI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .task-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .task-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
+        .task-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        .task-detail {
+            flex: 1;
+            min-width: 120px;
+        }
+        .task-detail label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .task-detail span {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        .task-description {
+            color: #666;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            margin: 20px 0;
+            transition: transform 0.2s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .stat {
+            flex: 1;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            display: block;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            .header {
+                padding: 30px 20px;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .task-details {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Task Created Successfully!</h1>
+            <p>Your new task is now live and ready for applications</p>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Hello {{ user_name }},
+            </div>
+            
+            <p>Great news! Your task <strong>"{{ data.task_title }}"</strong> has been successfully created and is now visible to freelancers on our platform.</p>
+            
+            <div class="task-card">
+                <div class="task-title">{{ data.task_title }}</div>
+                <div class="task-description">
+                    {{ data.task_description[:200] }}{% if data.task_description|length > 200 %}...{% endif %}
+                </div>
+                
+                <div class="task-details">
+                    <div class="task-detail">
+                        <label>Budget</label>
+                        <span>${{ data.budget_min }} - ${{ data.budget_max }}</span>
+                    </div>
+                    <div class="task-detail">
+                        <label>Category</label>
+                        <span>{{ data.category }}</span>
+                    </div>
+                    <div class="task-detail">
+                        <label>Status</label>
+                        <span style="color: #28a745;">● Open</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">Applications</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">{{ data.max_applications or '∞' }}</span>
+                    <span class="stat-label">Max Applications</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">24h</span>
+                    <span class="stat-label">Average Response</span>
+                </div>
+            </div>
+            
+            <p>You'll receive notifications when freelancers apply to your task. You can review applications and choose the best candidate for your project.</p>
+            
+            <a href="https://freelanceai.com/tasks/{{ data.task_id }}" class="button">
+                View Task Details
+            </a>
+            
+            <p style="color: #666; font-size: 14px;">
+                <strong>Tip:</strong> Consider adding more details to your task description to attract better applications. 
+                Clear requirements and examples often lead to higher quality proposals.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>
+                This email was sent from FreelanceAI. 
+                <a href="{{ unsubscribe_url }}">Unsubscribe</a> from task notifications.
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                © {{ current_date.split(' ')[-1] }} FreelanceAI. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html> 
