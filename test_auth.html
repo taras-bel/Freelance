@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth & WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #28a745;
+        }
+        .error {
+            background: #dc3545;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Auth & WebSocket Test</h1>
+        
+        <div class="section">
+            <h2>1. Authentication Test</h2>
+            <div>
+                <label>Email:</label>
+                <input type="email" id="email" value="dkdkulul@gmail.com" placeholder="Enter email">
+            </div>
+            <div>
+                <label>Password:</label>
+                <input type="password" id="password" value="password123" placeholder="Enter password">
+            </div>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testLogout()">Clear Token</button>
+            <div id="authResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. WebSocket Test</h2>
+            <button onclick="testWebSocket()">Test WebSocket Connection</button>
+            <button onclick="disconnectWebSocket()">Disconnect</button>
+            <div id="wsResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. API Test</h2>
+            <button onclick="testAchievements()">Test Achievements API</button>
+            <button onclick="testNotifications()">Test Notifications API</button>
+            <div id="apiResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. Current Token</h2>
+            <button onclick="showToken()">Show Current Token</button>
+            <pre id="tokenInfo">Click "Show Current Token" to see token info</pre>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResult(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('access_token', data.access_token);
+                    showStatus('authResult', `Login successful! Token saved.`, 'success');
+                    showResult('authResult', data);
+                } else {
+                    showStatus('authResult', `Login failed: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus('authResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testLogout() {
+            localStorage.removeItem('access_token');
+            showStatus('authResult', 'Token cleared from localStorage', 'info');
+        }
+
+        function testWebSocket() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                showStatus('wsResult', 'No token found. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                ws = new WebSocket(`ws://localhost:8000/ws/${token}`);
+                
+                ws.onopen = function() {
+                    showStatus('wsResult', 'WebSocket connected successfully!', 'success');
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    showResult('wsResult', { type: 'message', data });
+                };
+                
+                ws.onerror = function(error) {
+                    showStatus('wsResult', `WebSocket error: ${error}`, 'error');
+                };
+                
+                ws.onclose = function(event) {
+                    showStatus('wsResult', `WebSocket closed: ${event.code} - ${event.reason}`, 'error');
+                };
+            } catch (error) {
+                showStatus('wsResult', `Error creating WebSocket: ${error.message}`, 'error');
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                showStatus('wsResult', 'WebSocket disconnected', 'info');
+            }
+        }
+
+        async function testAchievements() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                showStatus('apiResult', 'No token found. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/achievements/unlocked', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('apiResult', 'Achievements API call successful!', 'success');
+                    showResult('apiResult', data);
+                } else {
+                    showStatus('apiResult', `API call failed: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus('apiResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testNotifications() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                showStatus('apiResult', 'No token found. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/notifications/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('apiResult', 'Notifications API call successful!', 'success');
+                    showResult('apiResult', data);
+                } else {
+                    showStatus('apiResult', `API call failed: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus('apiResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showToken() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                document.getElementById('tokenInfo').textContent = 'No token found in localStorage';
+                return;
+            }
+
+            try {
+                // Decode JWT token (header.payload.signature)
+                const parts = token.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    const tokenInfo = {
+                        token: token.substring(0, 50) + '...',
+                        payload: payload,
+                        expires: new Date(payload.exp * 1000).toLocaleString(),
+                        isExpired: payload.exp * 1000 < Date.now()
+                    };
+                    document.getElementById('tokenInfo').textContent = JSON.stringify(tokenInfo, null, 2);
+                } else {
+                    document.getElementById('tokenInfo').textContent = 'Invalid token format';
+                }
+            } catch (error) {
+                document.getElementById('tokenInfo').textContent = `Error decoding token: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 
